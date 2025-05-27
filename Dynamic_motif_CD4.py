@@ -12,8 +12,8 @@ kp = 10 # cells (10**(-1)-10**(3)) - Antigen driven proliferation threshold (act
 ke = 2 * 10**5 # cells (5-2.7*10**4) - Antigen driven suppression threshold (exhaustion)
 
 k7 = 0.5 # /day - Antigen driven CD4 T cell proliferation rate (activation rate)
-phiC = # Cells - Efficacy threshold of CD4 T cell (half-maximal)
-phih = 
+phiC = 5 # Cells - Efficacy threshold of CD4 T cell (half-maximal)
+phih = 10 # Cells - Threshold for CD4 help in boosting CD8 proliferation
 
 alpha = 10**(-8) # /cells**2/day - Rate of growth of cytokine pathology
 dc = 1 # Rate of loss of cytokine pathology 
@@ -32,9 +32,11 @@ I_mesh, E_mesh = np.meshgrid(I_vals, E_vals)
 U = np.zeros(I_mesh.shape)
 V = np.zeros(E_mesh.shape)
 M = np.zeros(I_mesh.shape)
+
+C_fixed = 10**2 
 for i in range(I_mesh.shape[0]):
     for j in range(I_mesh.shape[1]):
-        dI, dE = dynamical_motif([I_mesh[i, j], E_mesh[i, j]], 0)
+        dI, dE, _ = dynamical_motif([I_mesh[i, j], E_mesh[i, j], C_fixed], 0)
         U[i, j] = dI
         V[i, j] = dE
         M[i, j] = np.hypot(dI, dE)
@@ -45,14 +47,14 @@ V /= M
 t = np.linspace(0, 100, 1000)
 t_on = np.linspace(0, 15, 1000)
 
-init_above = [1 * 10**(0), 1 * 10**(2)]    # Above the basin line (leads to clearance)
-init_above_2 = [I_max, 1 * 10**(5)]    # Above the basin line (leads to clearance)
+init_above = [1, 1 * 10**(2), C_fixed]    # Above the basin line (leads to clearance)
+init_above_2 = [I_max, 1 * 10**(5), C_fixed]    # Above the basin line (leads to clearance)
 
-init_below = [1 * 10**(0), 7 * 10**0]    # Below the basin line (leads to persistence)
-init_below_2 = [I_max, 6 * 10**4]    # Below the basin line (leads to persistence)
+init_below = [1, 7 * 10**0, C_fixed]    # Below the basin line (leads to persistence)
+init_below_2 = [I_max, 6 * 10**4, C_fixed]    # Below the basin line (leads to persistence)
 
-init_on = [1 * 10**(0), 2.029075322800359 * 10**1]     # On the basin boundary (near the saddle)
-init_on_2 = [I_max, 8.178902 * 10**4]     # On the basin boundary (near the saddle)
+init_on = [1, 2.029075322800359 * 10**1, C_fixed]     # On the basin boundary (near the saddle)
+init_on_2 = [I_max, 8.178902 * 10**4, C_fixed]     # On the basin boundary (near the saddle)
 
 traj_above = odeint(dynamical_motif, init_above, t)
 traj_above_2 = odeint(dynamical_motif, init_above_2, t)
@@ -68,14 +70,14 @@ plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap
 plt.colorbar(label='log10 magnitude')
 plt.quiver(I_mesh / I_max, E_mesh / I_max, U, V, color='white', pivot='mid', alpha=0.7)
 
-plt.plot(traj_above[:, 0] / I_max, traj_above[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
-plt.plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+#plt.plot(traj_above[:, 0] / I_max, traj_above[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+#plt.plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
 
-plt.plot(traj_below[:, 0] / I_max, traj_below[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
-plt.plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+#plt.plot(traj_below[:, 0] / I_max, traj_below[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+#plt.plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
 
 plt.plot(traj_on[:, 0] / I_max, traj_on[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
-plt.plot(traj_on_2[:, 0] / I_max, traj_on_2[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+#plt.plot(traj_on_2[:, 0] / I_max, traj_on_2[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
 
 plt.xscale('log')
 plt.yscale('log')
