@@ -37,53 +37,43 @@ for i in range(I_mesh.shape[0]):
 M[M == 0] = 1
 U /= M
 V /= M
+t = np.linspace(0, 100, 1000)
+t_on = np.linspace(0, 15, 1000)
+
+init_above = [1 * 10**(0), 1 * 10**(2)]    # Above the basin line (leads to clearance)
+init_above_2 = [I_max, 1 * 10**(5)]    # Above the basin line (leads to clearance)
+
+init_below = [1 * 10**(0), 7 * 10**0]    # Below the basin line (leads to persistence)
+init_below_2 = [I_max, 6 * 10**4]    # Below the basin line (leads to persistence)
+
+init_on = [1 * 10**(0), 2.029075322800359 * 10**1]     # On the basin boundary (near the saddle)
+init_on_2 = [I_max, 8.178902 * 10**4]     # On the basin boundary (near the saddle)
+
+traj_above = odeint(dynamical_motif, init_above, t)
+traj_above_2 = odeint(dynamical_motif, init_above_2, t)
+
+traj_below = odeint(dynamical_motif, init_below, t)
+traj_below_2 = odeint(dynamical_motif, init_below_2, t)
+
+traj_on = odeint(dynamical_motif, init_on, t_on)
+traj_on_2 = odeint(dynamical_motif, init_on_2, t_on)
 
 plt.figure(figsize=(10, 8))
-plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='plasma', vmin=0, vmax=5)
-plt.colorbar(label='log10 speed magnitude')
+plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
+plt.colorbar(label='log10 magnitude')
 plt.quiver(I_mesh / I_max, E_mesh / I_max, U, V, color='white', pivot='mid', alpha=0.7)
-plt.scatter(np.log10(10**(-6)), np.log10(k1 / k2 / I_max), color='cyan', s=100, edgecolor='black', label='Clearance (I=0)')
-plt.scatter(np.log10(1), np.log10(10**(-6)), color='magenta', s=100, edgecolor='black', label='Persistence (I=Imax)')
+
+plt.plot(traj_above[:, 0] / I_max, traj_above[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+plt.plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+
+plt.plot(traj_below[:, 0] / I_max, traj_below[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+plt.plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+
+plt.plot(traj_on[:, 0] / I_max, traj_on[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+plt.plot(traj_on_2[:, 0] / I_max, traj_on_2[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('Infected cells (I / Imax)')
 plt.ylabel('CD8 T cells (E / Imax)')
 plt.show()
-
-
-
-def immunopathology(P, t, alpha, dc, I_interp, E_interp):
-    I_t = I_interp(t)
-    E_t = E_interp(t)
-    dPdt = alpha * I_t * E_t - dc * P
-    return dPdt
-
-t = np.linspace(0, 20, 1000)
-initial_conditions = [
-    (0 , 0, 0),
-    (10**(-4), 10**(-4), 0),
-    (10**(-5), 10**(-3), 0),
-    (1, 1, 0),
-]
-
-plt.figure(figsize=(10, 6))
-
-for I0, E0, P0 in initial_conditions:
-    sol = odeint(dynamical_motif, [I0, E0], t)
-    I_vals = sol[:, 0]
-    E_vals = sol[:, 1]
-
-    I_interp = interp1d(t, I_vals, fill_value="extrapolate")
-    E_interp = interp1d(t, E_vals, fill_value="extrapolate")
-
-    P_sol = odeint(immunopathology, P0, t, args=(alpha, dc, I_interp, E_interp))
-
-    label = f"I0={I0:.0e}, E0={E0:.0e}"
-    plt.plot(t, P_sol, label=label)
-
-plt.xlabel('Days post Infection')
-plt.ylabel('Cytokine Pathology (A.U)')
-plt.legend()
-plt.grid(True)
-plt.show()
-
