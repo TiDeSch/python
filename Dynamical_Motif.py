@@ -61,7 +61,7 @@ traj_on_2 = odeint(dynamical_motif, init_on_2, t_on)
 plt.figure(figsize=(10, 8))
 plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
 plt.colorbar(label='log10 magnitude')
-plt.quiver(I_mesh / I_max, E_mesh / I_max, U, V, color='white', pivot='mid', alpha=0.7)
+plt.quiver(I_mesh / I_max, E_mesh / I_max, U, V, color='black', pivot='mid', alpha=0.7)
 
 plt.plot(traj_above[:, 0] / I_max, traj_above[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
 plt.plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
