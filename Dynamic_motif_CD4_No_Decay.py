@@ -2,6 +2,7 @@ import numpy as np
 from scipy.integrate import odeint
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
 
 k1 = 1.3  # /day (3-4) - Infection spread rate
 I_max = 10**6  # cells (10**6) - Maximum number of infected cells
@@ -18,6 +19,23 @@ phih = 9 # Cells - Threshold for CD4 help in boosting CD8 proliferation
 alpha = 10**(-8) # /cells**2/day - Rate of growth of cytokine pathology
 dc = 1 # Rate of loss of cytokine pathology 
 
+C0 = 0
+P0 = 0
+
+def steady_state(vars):
+    I, E, C = vars
+    dI = k1 * I * (1 - I / I_max) - k2 * I * E
+    dE = k3 * I * E / (kp + I) * (C / (phih + C)) - k4 * I * E / (ke + I)
+    dC = k7 * I / (phiC + I)
+    return [dI, dE, dC]
+
+initial_guess = [3.559*10**3, 2.591*10**4, 0]
+I_saddle, E_saddle, _ = fsolve(steady_state, initial_guess)
+delta = 0
+init_saddle = [I_saddle * (1 + delta), E_saddle * (1 + delta), C0]
+print(I_saddle)
+print(E_saddle)
+
 def dynamical_motif(y, t):
     I, E, C = y
     dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
@@ -33,7 +51,6 @@ U = np.zeros(I_mesh.shape)
 V = np.zeros(E_mesh.shape)
 M = np.zeros(I_mesh.shape)
 
-C0 = 0
 for i in range(I_mesh.shape[0]):
     for j in range(I_mesh.shape[1]):
         dI, dE, _ = dynamical_motif([I_mesh[i, j], E_mesh[i, j], C0], 0)
@@ -65,6 +82,8 @@ traj_below_2 = odeint(dynamical_motif, init_below_2, t)
 traj_on = odeint(dynamical_motif, init_on, t_on)
 traj_on_2 = odeint(dynamical_motif, init_on_2, t_on)
 
+traj_saddle = odeint(dynamical_motif, init_saddle, t)
+
 plt.figure(figsize=(10, 8))
 plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
 plt.colorbar(label='log10 magnitude')
@@ -79,28 +98,10 @@ plt.plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, la
 plt.plot(traj_on[:, 0] / I_max, traj_on[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
 plt.plot(traj_on_2[:, 0] / I_max, traj_on_2[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
 
+plt.scatter(I_saddle / I_max, E_saddle / I_max, color='white')
+
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('Infected cells (I / Imax)')
 plt.ylabel('CD8 T cells (E / Imax)')
 plt.show()
-
-
-
-init_above = [1, 1.9 * 10**(4), C0]    # Above the basin line (leads to clearance)
-init_above_2 = [I_max, 2.5 * 10**(5), C0]    # Above the basin line (leads to clearance)
-
-init_below = [1, 7 * 10**2, C0]    # Below the basin line (leads to persistence)
-init_below_2 = [I_max, 5 * 10**4, C0]    # Below the basin line (leads to persistence)
-
-init_on = [1, 1.35479 * 10**4, C0]     # On the basin boundary (near the saddle)
-init_on_2 = [I_max, 1.6878996297 * 10**5, C0]     # On the basin boundary (near the saddle)
-
-traj_above = odeint(dynamical_motif, init_above, t)
-traj_above_2 = odeint(dynamical_motif, init_above_2, t)
-
-traj_below = odeint(dynamical_motif, init_below, t)
-traj_below_2 = odeint(dynamical_motif, init_below_2, t)
-
-traj_on = odeint(dynamical_motif, init_on, t_on)
-traj_on_2 = odeint(dynamical_motif, init_on_2, t_on)
