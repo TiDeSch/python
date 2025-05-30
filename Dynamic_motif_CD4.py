@@ -3,6 +3,7 @@ from scipy.integrate import odeint
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
+from scipy.optimize import root_scalar
 
 k1 = 1.3  # /day (3-4) - Infection spread rate
 I_max = 10**6  # cells (10**6) - Maximum number of infected cells
@@ -15,6 +16,7 @@ ke = 2 * 10**5 # cells (5-2.7*10**4) - Antigen driven suppression threshold (exh
 k7 = 0.5 # /day - Antigen driven CD4 T cell proliferation rate (activation rate)
 phiC = 2 # Cells - Efficacy threshold of CD4 T cell (half-maximal)
 phih = 9 # Cells - Threshold for CD4 help in boosting CD8 proliferation
+gammaC = 0.2 # death rate of CD4 T cells
 
 alpha = 10**(-8) # /cells**2/day - Rate of growth of cytokine pathology
 dc = 1 # Rate of loss of cytokine pathology 
@@ -26,21 +28,37 @@ def steady_state(vars):
     I, E, C = vars
     dI = k1 * I * (1 - I / I_max) - k2 * I * E
     dE = k3 * I * E / (kp + I) * (C / (phih + C)) - k4 * I * E / (ke + I)
-    dC = k7 * I / (phiC + I) - dc * C
+    dC = k7 * I / (phiC + I) - gammaC * C
     return [dI, dE, dC]
+
+def dynamical_motif(y, t):
+    I, E, C, P = y
+    dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
+    dEdt = k3 * I * E / (kp + I) * (C / (phih + C)) - k4 * I * E / (ke + I)
+    dCdt = k7 * I / (phiC + I) - gammaC * C
+    dPdt = alpha * I * E - gammaC * P
+    return [dIdt, dEdt, dCdt, dPdt]
 
 initial_guess = [3.559*10**3, 2.591*10**4, 0]
 I_saddle, E_saddle, _ = fsolve(steady_state, initial_guess)
 delta = 0
 init_saddle = [I_saddle * (1 + delta), E_saddle * (1 + delta), C0, P0]
 
-def dynamical_motif(y, t):
-    I, E, C, P = y
-    dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
-    dEdt = k3 * I * E / (kp + I) * (C / (phih + C)) - k4 * I * E / (ke + I)
-    dCdt = k7 * I / (phiC + I) - dc * C
-    dPdt = alpha * I * E - dc * P
-    return [dIdt, dEdt, dCdt, dPdt]
+tol = 10**(-20)
+def distance_from_saddle(E0, I0, direction='forward'):
+    y0 = [I0, E0, C0, P0]
+    t_span = np.linspace(0, 100, 1000) if direction == 'forward' else np.linspace(0, -100, 1000)
+    traj = odeint(dynamical_motif, y0, t_span)
+    I_traj, E_traj = traj[:, 0], traj[:, 1]
+    d = np.min(np.sqrt((I_traj - I_saddle)**2 + (E_traj - E_saddle)**2))
+    return d - tol
+
+Guess_E0_for_I0_0 = 1.35479 * 10**4
+Guess_E0_for_I0_Imax = 1.6514083 * 10**5
+E0_for_I0_0 = fsolve(lambda E0: distance_from_saddle(E0[0], 1, 'forward'), [Guess_E0_for_I0_0])[0]
+E0_for_I0_Imax = fsolve(lambda E0: distance_from_saddle(E0[0], I_max, 'backward'), [Guess_E0_for_I0_Imax])[0]
+print(f"E0 for I0=0: {E0_for_I0_0:.6e}")
+print(f"E0 for I0=I_max: {E0_for_I0_Imax:.6e}")
 
 I_vals = np.logspace(-5, 0, 50) * I_max  
 E_vals = np.logspace(-5, 0, 50) * I_max 
@@ -61,16 +79,16 @@ M[M == 0] = 1
 U /= M
 V /= M
 t = np.linspace(0, 50, 1000)
-t_on = np.linspace(0, 50, 1000)
+t_on = np.linspace(0, 20, 1000)
 
-init_above = [1, 1.9 * 10**(4), C0, P0]    # Above the basin line (leads to clearance)
+init_above = [1, 2 * 10**(4), C0, P0]    # Above the basin line (leads to clearance)
 init_above_2 = [I_max, 2.5 * 10**(5), C0, P0]    # Above the basin line (leads to clearance)
 
 init_below = [1, 7 * 10**2, C0, P0]    # Below the basin line (leads to persistence)
 init_below_2 = [I_max, 5 * 10**4, C0, P0]    # Below the basin line (leads to persistence)
 
-init_on = [1, 1.35479 * 10**4, C0, P0]     # On the basin boundary (near the saddle)
-init_on_2 = [I_max, 1.6878996297 * 10**5, C0, P0]     # On the basin boundary (near the saddle)
+init_bound_forward = [1, E0_for_I0_0, C0, P0]     # On the basin boundary (near the saddle)
+init_bound_backward = [I_max, E0_for_I0_Imax, C0, P0]     # On the basin boundary (near the saddle)
 
 traj_above = odeint(dynamical_motif, init_above, t)
 traj_above_2 = odeint(dynamical_motif, init_above_2, t)
@@ -78,10 +96,9 @@ traj_above_2 = odeint(dynamical_motif, init_above_2, t)
 traj_below = odeint(dynamical_motif, init_below, t)
 traj_below_2 = odeint(dynamical_motif, init_below_2, t)
 
-traj_on = odeint(dynamical_motif, init_on, t_on)
-traj_on_2 = odeint(dynamical_motif, init_on_2, t_on)
-
 traj_saddle = odeint(dynamical_motif, init_saddle, t)
+traj_bound_forward = odeint(dynamical_motif, init_bound_forward, t_on)
+traj_bound_backward = odeint(dynamical_motif, init_bound_backward, t_on)
 
 plt.figure(figsize=(10, 8))
 plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
@@ -94,10 +111,9 @@ plt.plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', lw=2, l
 plt.plot(traj_below[:, 0] / I_max, traj_below[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
 plt.plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
 
-plt.plot(traj_on[:, 0] / I_max, traj_on[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
-plt.plot(traj_on_2[:, 0] / I_max, traj_on_2[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
-
 plt.scatter(I_saddle / I_max, E_saddle / I_max, color='white')
+plt.plot(traj_bound_forward[:, 0] / I_max, traj_bound_forward[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+plt.plot(traj_bound_backward[:, 0] / I_max, traj_bound_backward[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
 
 plt.xscale('log')
 plt.yscale('log')
