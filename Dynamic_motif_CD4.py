@@ -13,7 +13,7 @@ k4 = 3.0 # /day (2-4) - Antigen driven CD8 T cell suppression rate (exhaustion r
 kp = 10 # cells (10**(-1)-10**(3)) - Antigen driven proliferation threshold (activation)
 ke = 2 * 10**5 # cells (5-2.7*10**4) - Antigen driven suppression threshold (exhaustion)
 
-k7 = 0.5 # /day - Antigen driven CD4 T cell proliferation rate (activation rate)
+k7 = 0.5 # /day - CD4 T cell driven proliferation
 phiC = 2 # Cells - Efficacy threshold of CD4 T cell (half-maximal)
 phih = 9 # Cells - Threshold for CD4 help in boosting CD8 proliferation
 gammaC = 0.2 # death rate of CD4 T cells
@@ -36,7 +36,7 @@ def dynamical_motif(y, t):
     dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
     dEdt = k3 * I * E / (kp + I) * (C / (phih + C)) - k4 * I * E / (ke + I)
     dCdt = k7 * I / (phiC + I) - gammaC * C
-    dPdt = alpha * I * E - gammaC * P
+    dPdt = alpha * I * E - dc * P
     return [dIdt, dEdt, dCdt, dPdt]
 
 initial_guess = [3.559*10**3, 2.591*10**4, 0]
@@ -81,11 +81,11 @@ V /= M
 t = np.linspace(0, 50, 1000)
 t_on = np.linspace(0, 20, 1000)
 
-init_above = [1, 2 * 10**(4), C0, P0]    # Above the basin line (leads to clearance)
-init_above_2 = [I_max, 2.5 * 10**(5), C0, P0]    # Above the basin line (leads to clearance)
+init_above = [1, E0_for_I0_0*2.7, C0, P0]    # Above the basin line (leads to clearance)
+init_above_2 = [I_max, E0_for_I0_Imax*1.2, C0, P0]    # Above the basin line (leads to clearance)
 
-init_below = [1, 7 * 10**2, C0, P0]    # Below the basin line (leads to persistence)
-init_below_2 = [I_max, 5 * 10**4, C0, P0]    # Below the basin line (leads to persistence)
+init_below = [1, E0_for_I0_0/2.7, C0, P0]    # Below the basin line (leads to persistence)
+init_below_2 = [I_max, E0_for_I0_Imax/1.2, C0, P0]    # Below the basin line (leads to persistence)
 
 init_bound_forward = [1, E0_for_I0_0, C0, P0]     # On the basin boundary (near the saddle)
 init_bound_backward = [I_max, E0_for_I0_Imax, C0, P0]     # On the basin boundary (near the saddle)
@@ -123,10 +123,10 @@ plt.show()
 
 
 plt.figure(figsize=(10, 8))
-plt.plot(t, traj_saddle[:, 2], color='black')
-plt.plot(t, traj_above[:, 2], 'blue')
+plt.plot(t, traj_saddle[:, 2], color='black', label='At Saddle point')
+plt.plot(t, traj_above[:, 2], 'blue', label='Clearance')
 #plt.plot(t, traj_above_2[:, 2], 'blue')
-plt.plot(t, traj_below[:, 2], 'red')
+plt.plot(t, traj_below[:, 2], 'red', label='Persistence')
 #plt.plot(t, traj_below_2[:, 2], 'red')
 plt.xlabel('Time post infection')
 plt.ylabel('Cytokine pathology')
