@@ -8,12 +8,12 @@ from scipy.optimize import root_scalar
 k1 = 1.3  # /day (3-4) - Infection spread rate
 I_max = 10**6  # cells (10**6) - Maximum number of infected cells
 k2 = 5 * 10**(-5) # /cells/day (10**(-6)-10**(-4)) - Killing rate of infected cells by CD8 T cells
-k3 = 1.0 # /day (1)- Antigen driven CD8 T cell proliferation rate (activation rate)
+k3 = 1 # /day (1)- Antigen driven CD8 T cell proliferation rate (activation rate)
 k4 = 3.0 # /day (2-4) - Antigen driven CD8 T cell suppression rate (exhaustion rate)
 kp = 10 # cells (10**(-1)-10**(3)) - Antigen driven proliferation threshold (activation)
 ke = 2 * 10**5 # cells (5-2.7*10**4) - Antigen driven suppression threshold (exhaustion)
 
-k7 = 0.5 # /day - CD4 T cell driven proliferation
+k7 = k3/2 # /day - CD4 T cell driven proliferation
 phiC = 2 # Cells - Efficacy threshold of CD4 T cell (half-maximal)
 phih = 9 # Cells - Threshold for CD4 help in boosting CD8 proliferation
 gammaC = 0.2 # death rate of CD4 T cells
@@ -84,7 +84,7 @@ t_on = np.linspace(0, 20, 1000)
 init_above = [1, E0_for_I0_0*2.7, C0, P0]    # Above the basin line (leads to clearance)
 init_above_2 = [I_max, E0_for_I0_Imax*1.2, C0, P0]    # Above the basin line (leads to clearance)
 
-init_below = [1, E0_for_I0_0/2.7, C0, P0]    # Below the basin line (leads to persistence)
+init_below = [1, E0_for_I0_0/10.7, C0, P0]    # Below the basin line (leads to persistence)
 init_below_2 = [I_max, E0_for_I0_Imax/1.2, C0, P0]    # Below the basin line (leads to persistence)
 
 init_bound_forward = [1, E0_for_I0_0, C0, P0]     # On the basin boundary (near the saddle)
@@ -130,6 +130,32 @@ plt.plot(t, traj_below[:, 2], 'red', label='Persistence')
 #plt.plot(t, traj_below_2[:, 2], 'red')
 plt.xlabel('Time post infection')
 plt.ylabel('Cytokine pathology')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 8))
+plt.plot(t, traj_saddle[:, 1]/I_max, color='black', label='At Saddle point')
+plt.plot(t, traj_above[:, 1]/I_max, 'blue', label='Clearance')
+plt.plot(t, traj_below[:, 1]/I_max, 'red', label='Persistence')
+plt.yscale('log')
+plt.xlabel('Time post infection')
+plt.ylabel('CD8 T cells (E/Imax)')
+plt.ylim([10**(-6),1])
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 8))
+plt.plot(t, traj_saddle[:, 0]/I_max, color='black', label='At Saddle point')
+plt.plot(t, traj_above[:, 0]/I_max, 'blue', label='Clearance')
+plt.plot(t, traj_below[:, 0]/I_max, 'red', label='Persistence')
+plt.yscale('log')
+plt.xlabel('Time post infection')
+plt.ylabel('Infected (I/Imax)')
+plt.ylim([10**(-6),1])
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
