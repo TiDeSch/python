@@ -34,13 +34,15 @@ def steady_state(vars):
 def dynamical_motif(y, t):
     I, E, C, P = y
     dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
-    dEdt = k3 * (1 + I * E / (kp + I) * (C / (phih + C))) - k4 * I * E / (ke + I)
+    dEdt = k3 * + I * E / (kp + I) * (1 + (C / (phih + C))) - k4 * I * E / (ke + I)
     dCdt = k7 * I / (phiC + I) - gammaC * C
     dPdt = alpha * I * E - dc * P
     return [dIdt, dEdt, dCdt, dPdt]
 
-initial_guess = [3.559*10**3, 2.591*10**4, C0]
+I_saddle_adjust = 4*10**(-2)*I_max # k3=.5, 4*10**(-2) - k=.8, 7.8*10**(-2)
+initial_guess = [2*10**(-1)*I_max, 2*10**5, C0]
 I_saddle, E_saddle, _ = fsolve(steady_state, initial_guess)
+I_saddle = I_saddle + I_saddle_adjust
 init_saddle = [I_saddle, E_saddle, C0, P0]
 
 tol = 10**(-10)
@@ -52,8 +54,8 @@ def distance_from_saddle(E0, I0, direction='forward'):
     d = np.min(np.sqrt((I_traj - I_saddle)**2 + (E_traj - E_saddle)**2))
     return d - tol
 
-Guess_E0_for_I0_0 = 2 * 10**4
-Guess_E0_for_I0_Imax = 1.7080004 * 10**5 # k3=.5, 1.7080004*10**5
+Guess_E0_for_I0_0 = 5*10**5
+Guess_E0_for_I0_Imax = 1.184851*10**5 # k3=.5, 1.184851*10**5 - k3=.8, 9.38603*10**4
 E0_for_I0_0 = fsolve(lambda E0: distance_from_saddle(E0[0], 1, 'forward'), [Guess_E0_for_I0_0])[0]
 E0_for_I0_Imax = fsolve(lambda E0: distance_from_saddle(E0[0], I_max, 'backward'), [Guess_E0_for_I0_Imax])[0]
 print(f"E0 for I0=0: {E0_for_I0_0}")
@@ -77,11 +79,12 @@ M[M == 0] = 1
 U /= M
 V /= M
 t = np.linspace(0, 40, 1000)
+t_on = np.linspace(0, 15, 1000)
 
-init_above = [1, E0_for_I0_0*1.15, C0, P0]    # Above the basin line (leads to clearance)
+init_above = [1, E0_for_I0_0*2, C0, P0]    # Above the basin line (leads to clearance)
 init_above_2 = [I_max, E0_for_I0_Imax*2, C0, P0]    # Above the basin line (leads to clearance)
 
-init_below = [1, E0_for_I0_0/10.7, C0, P0]    # Below the basin line (leads to persistence)
+init_below = [1, E0_for_I0_0/2, C0, P0]    # Below the basin line (leads to persistence)
 init_below_2 = [I_max, E0_for_I0_Imax/1.2, C0, P0]    # Below the basin line (leads to persistence)
 
 init_bound_forward = [1, E0_for_I0_0, C0, P0]     # On the basin boundary (near the saddle)
@@ -94,8 +97,8 @@ traj_below = odeint(dynamical_motif, init_below, t)
 traj_below_2 = odeint(dynamical_motif, init_below_2, t)
 
 traj_saddle = odeint(dynamical_motif, init_saddle, t)
-traj_bound_forward = odeint(dynamical_motif, init_bound_forward, t)
-traj_bound_backward = odeint(dynamical_motif, init_bound_backward, t)
+traj_bound_forward = odeint(dynamical_motif, init_bound_forward, t_on)
+traj_bound_backward = odeint(dynamical_motif, init_bound_backward, t_on)
 
 plt.figure(figsize=(10, 8))
 plt.pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
