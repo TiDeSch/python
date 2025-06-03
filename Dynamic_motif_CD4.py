@@ -17,6 +17,7 @@ k7 = k3/2 # /day - CD4 T cell driven proliferation
 phiC = kp/5 # Cells - Efficacy threshold of CD4 T cell (half-maximal)
 phih = kp*0.9 # Cells - Threshold for CD4 help in boosting CD8 proliferation
 gammaC = 0.2 # death rate of CD4 T cells
+k3_index = {0.5: 0, 0.8: 1}
 
 alpha = 10**(-8) # /cells**2/day - Rate of growth of cytokine pathology
 dc = 1 # Rate of loss of cytokine pathology 
@@ -39,7 +40,8 @@ def dynamical_motif(y, t):
     dPdt = alpha * I * E - dc * P
     return [dIdt, dEdt, dCdt, dPdt]
 
-I_saddle_adjust = 4*10**(-2)*I_max # k3=.5, 4*10**(-2) - k=.8, 7.8*10**(-2)
+Guess = [4*10**(-2)*I_max, 7.8*10**(-2)*I_max]
+I_saddle_adjust = Guess[k3_index.get(k3, -1)] if k3 in k3_index else 0
 initial_guess = [2*10**(-1)*I_max, 2*10**5, C0]
 I_saddle, E_saddle, _ = fsolve(steady_state, initial_guess)
 I_saddle = I_saddle + I_saddle_adjust
@@ -55,7 +57,8 @@ def distance_from_saddle(E0, I0, direction='forward'):
     return d - tol
 
 Guess_E0_for_I0_0 = 5*10**5
-Guess_E0_for_I0_Imax = 1.184851*10**5 # k3=.5, 1.184851*10**5 - k3=.8, 9.38603*10**4
+Guess = [1.184851*10**5, 9.38603*10**4]
+Guess_E0_for_I0_Imax = Guess[k3_index.get(k3, -1)] if k3 in k3_index else 10**4
 E0_for_I0_0 = fsolve(lambda E0: distance_from_saddle(E0[0], 1, 'forward'), [Guess_E0_for_I0_0])[0]
 E0_for_I0_Imax = fsolve(lambda E0: distance_from_saddle(E0[0], I_max, 'backward'), [Guess_E0_for_I0_Imax])[0]
 print(f"E0 for I0=0: {E0_for_I0_0}")
