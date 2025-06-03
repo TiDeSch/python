@@ -65,14 +65,13 @@ for i in range(I_mesh.shape[0]):
 M[M == 0] = 1
 U /= M
 V /= M
-t = np.linspace(0, 20, 1000)
+t = np.linspace(0, 40, 1000)
 t_on = np.linspace(0, 15, 1000)
-t_backwards = np.linspace(0, -100, 1000)
 
-init_above = [1, E0_for_I0_0*2.7, P0]    # Above the basin line (leads to clearance)
-init_above_2 = [I_max, E0_for_I0_Imax*1.2, P0]    # Above the basin line (leads to clearance)
+init_above = [1, E0_for_I0_0*2, P0]    # Above the basin line (leads to clearance)
+init_above_2 = [I_max, E0_for_I0_Imax*2, P0]    # Above the basin line (leads to clearance)
 
-init_below = [1, E0_for_I0_0/2.7, P0]    # Below the basin line (leads to persistence)
+init_below = [1, E0_for_I0_0/2, P0]    # Below the basin line (leads to persistence)
 init_below_2 = [I_max, E0_for_I0_Imax/1.2, P0]    # Below the basin line (leads to persistence)
 
 init_bound_forward = [1, E0_for_I0_0, P0]     # On the basin boundary (near the saddle)
