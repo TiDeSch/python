@@ -65,27 +65,38 @@ for i in range(I_mesh.shape[0]):
 M[M == 0] = 1
 U /= M
 V /= M
-t = np.linspace(0, 50, 1000)
-t_on = np.linspace(0, 15, 1000)
+t = np.linspace(0, 20, 1000)
+g = 700
 
-init_above = [1, 10**(-3)*I_max, P0]    # Above the basin line (leads to clearance)
+init_above = [1, 7*10**(-4)*I_max, P0]    # Above the basin line (leads to clearance)
 init_above_2 = [I_max, E0_for_I0_Imax*2, P0]    # Above the basin line (leads to clearance)
+init_above_kiss = [1, E0_for_I0_0*1.05, P0] 
+init_above_kiss_2 = [I_max, E0_for_I0_Imax*1.05, P0] 
 
 init_below = [1, I_max*10**(-5)*1.5, P0]    # Below the basin line (leads to persistence)
 init_below_2 = [I_max, E0_for_I0_Imax/1.2, P0]    # Below the basin line (leads to persistence)
+init_below_kiss = [1, E0_for_I0_0*0.9, P0] 
+init_below_kiss_2 = [I_max, E0_for_I0_Imax*0.9, P0] 
 
 init_bound_forward = [1, E0_for_I0_0, P0]     # On the basin boundary (near the saddle)
 init_bound_backward = [I_max, E0_for_I0_Imax, P0]     # On the basin boundary (near the saddle)
 
 traj_above = odeint(dynamical_motif, init_above, t)
 traj_above_2 = odeint(dynamical_motif, init_above_2, t)
+traj_above_kiss = odeint(dynamical_motif, init_above_kiss, t)
+traj_above_kiss_2 = odeint(dynamical_motif, init_above_kiss_2, t)
 
 traj_below = odeint(dynamical_motif, init_below, t)
 traj_below_2 = odeint(dynamical_motif, init_below_2, t)
+traj_below_kiss = odeint(dynamical_motif, init_below_kiss, t)
+traj_below_kiss_2 = odeint(dynamical_motif, init_below_kiss_2, t)
 
 traj_saddle = odeint(dynamical_motif, init_saddle, t)
-traj_bound_forward = odeint(dynamical_motif, init_bound_forward, t_on)
-traj_bound_backward = odeint(dynamical_motif, init_bound_backward, t_on)
+traj_bound_forward = odeint(dynamical_motif, np.float64(init_bound_forward), t)
+traj_bound_backward = odeint(dynamical_motif, init_bound_backward, t)
+
+print(E0_for_I0_Imax*2)
+print(E0_for_I0_Imax/1.2)
 
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 12))
@@ -98,20 +109,20 @@ axes[0,0].plot(traj_above_2[:, 0] / I_max, traj_above_2[:, 1] / I_max, 'blue', l
 axes[0,0].plot(traj_below[:, 0] / I_max, traj_below[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
 axes[0,0].plot(traj_below_2[:, 0] / I_max, traj_below_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
 axes[0,0].scatter(I_saddle / I_max, E_saddle / I_max, color='white')
-axes[0,0].plot(traj_bound_forward[:, 0] / I_max, traj_bound_forward[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
-axes[0,0].plot(traj_bound_backward[:, 0] / I_max, traj_bound_backward[:, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+axes[0,0].plot(traj_bound_forward[:g, 0] / I_max, traj_bound_forward[:g, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+axes[0,0].plot(traj_bound_backward[:g, 0] / I_max, traj_bound_backward[:g, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
 axes[0,0].set_xscale('log')
 axes[0,0].set_yscale('log')
 axes[0,0].set_xlabel('Infected cells (I / Imax)')
 axes[0,0].set_ylabel('CD8 T cells (E / Imax)')
 
 # Cytokine pathology
-axes[0,1].plot(t, traj_saddle[:, 2], color='black', label='At Saddle point', linewidth=2)
+axes[0,1].plot(t, traj_bound_forward[:, 2], color='black', label='At Saddle point', linewidth=2)
 axes[0,1].plot(t, traj_above[:, 2], 'blue', label='Clearance', linewidth=2)
 axes[0,1].plot(t, traj_below[:, 2], 'red', label='Persistence', linewidth=2)
 axes[0,1].set_xlabel('Time post infection')
 axes[0,1].set_ylabel('Cytokine pathology (P)')
-axes[0,1].legend()
+axes[0,1].legend(loc='upper left')
 axes[0,1].grid(True)
 axes[0,1].set_title('Cytokine Pathology Over Time')
 
@@ -123,7 +134,7 @@ axes[1,0].set_yscale('log')
 axes[1,0].set_xlabel('Time post infection')
 axes[1,0].set_ylabel('CD8 T cells (E/Imax)')
 axes[1,0].set_ylim([10**(-6), 1])
-axes[1,0].legend()
+axes[1,0].legend(loc='upper left')
 axes[1,0].grid(True)
 axes[1,0].set_title('CD8 T Cells Over Time')
 
@@ -135,7 +146,64 @@ axes[1,1].set_yscale('log')
 axes[1,1].set_xlabel('Time post infection')
 axes[1,1].set_ylabel('Infected cells (I/Imax)')
 axes[1,1].set_ylim([10**(-6), 1])
-axes[1,1].legend()
+axes[1,1].legend(loc='upper left')
+axes[1,1].grid(True)
+axes[1,1].set_title('Infected Cells Over Time')
+
+plt.tight_layout()
+#plt.show()
+
+
+#########################################################################################
+
+fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+# Phase Partrait
+pcm = axes[0,0].pcolormesh(I_mesh / I_max, E_mesh / I_max, np.log10(M), shading='auto', cmap='inferno', vmin=0, vmax=5)
+fig.colorbar(pcm, ax=axes[0,0], label='log10 magnitude')
+axes[0,0].quiver(I_mesh / I_max, E_mesh / I_max, U, V, color='black', pivot='mid', alpha=0.7)
+axes[0,0].plot(traj_above_kiss[:, 0] / I_max, traj_above_kiss[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+#axes[0,0].plot(traj_above_kiss_2[:, 0] / I_max, traj_above_kiss_2[:, 1] / I_max, 'blue', lw=2, label='Above basin (Clearance)')
+axes[0,0].plot(traj_below_kiss[:, 0] / I_max, traj_below_kiss[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+#axes[0,0].plot(traj_below_kiss_2[:, 0] / I_max, traj_below_kiss_2[:, 1] / I_max, 'red', lw=2, label='Below basin (Persistence)')
+axes[0,0].scatter(I_saddle / I_max, E_saddle / I_max, color='white')
+axes[0,0].plot(traj_bound_forward[:g, 0] / I_max, traj_bound_forward[:g, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+axes[0,0].plot(traj_bound_backward[:g, 0] / I_max, traj_bound_backward[:g, 1] / I_max, 'white', lw=2, linestyle='--', label='On basin (Saddle)')
+axes[0,0].set_xscale('log')
+axes[0,0].set_yscale('log')
+axes[0,0].set_xlabel('Infected cells (I / Imax)')
+axes[0,0].set_ylabel('CD8 T cells (E / Imax)')
+
+# Cytokine pathology
+axes[0,1].plot(t, traj_bound_forward[:, 2], color='black', label='At Saddle point', linewidth=2)
+axes[0,1].plot(t, traj_above_kiss[:, 2], 'blue', label='Clearance', linewidth=2)
+axes[0,1].plot(t, traj_below_kiss[:, 2], 'red', label='Persistence', linewidth=2)
+axes[0,1].set_xlabel('Time post infection')
+axes[0,1].set_ylabel('Cytokine pathology (P)')
+axes[0,1].legend(loc='upper left')
+axes[0,1].grid(True)
+axes[0,1].set_title('Cytokine Pathology Over Time')
+
+# CD8 T cells
+axes[1,0].plot(t, traj_bound_forward[:, 1]/I_max, color='black', label='At Saddle point', linewidth=2)
+axes[1,0].plot(t, traj_above_kiss[:, 1]/I_max, 'blue', label='Clearance', linewidth=2)
+axes[1,0].plot(t, traj_below_kiss[:, 1]/I_max, 'red', label='Persistence', linewidth=2)
+axes[1,0].set_yscale('log')
+axes[1,0].set_xlabel('Time post infection')
+axes[1,0].set_ylabel('CD8 T cells (E/Imax)')
+axes[1,0].set_ylim([10**(-6), 1])
+axes[1,0].legend(loc='upper left')
+axes[1,0].grid(True)
+axes[1,0].set_title('CD8 T Cells Over Time')
+
+# Infected cells
+axes[1,1].plot(t, traj_bound_forward[:, 0]/I_max, color='black', label='At Saddle point', linewidth=2)
+axes[1,1].plot(t, traj_above_kiss[:, 0]/I_max, 'blue', label='Clearance', linewidth=2)
+axes[1,1].plot(t, traj_below_kiss[:, 0]/I_max, 'red', label='Persistence', linewidth=2)
+axes[1,1].set_yscale('log')
+axes[1,1].set_xlabel('Time post infection')
+axes[1,1].set_ylabel('Infected cells (I/Imax)')
+axes[1,1].set_ylim([10**(-6), 1])
+axes[1,1].legend(loc='upper left')
 axes[1,1].grid(True)
 axes[1,1].set_title('Infected Cells Over Time')
 
