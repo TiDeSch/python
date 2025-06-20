@@ -65,7 +65,7 @@ for i in range(I_mesh.shape[0]):
 M[M == 0] = 1
 U /= M
 V /= M
-t = np.linspace(0, 20, 1000)
+t = np.linspace(0, 40, 1000)
 g = 700
 
 init_above = [1, 7*10**(-4)*I_max, P0]    # Above the basin line (leads to clearance)
@@ -206,6 +206,24 @@ axes[1,1].set_ylim([10**(-6), 1])
 axes[1,1].legend(loc='upper left')
 axes[1,1].grid(True)
 axes[1,1].set_title('Infected Cells Over Time')
+
+plt.tight_layout()
+plt.show()
+
+
+
+#####################################################
+
+fig, axes = plt.subplots(1, 1, figsize=(15, 12))
+# Cytokine pathology
+axes.plot(t, traj_bound_forward[:, 2], color='black', label='At Saddle point', linewidth=2)
+axes.plot(t, traj_above_kiss[:, 2], 'blue', label='Clearance', linewidth=2)
+axes.plot(t, traj_below_kiss[:, 2], 'red', label='Persistence', linewidth=2)
+axes.set_xlabel('Time post infection')
+axes.set_ylabel('Cytokine pathology (P)')
+axes.legend(loc='upper left')
+axes.grid(True)
+axes.set_title('Double-precision floating-point')
 
 plt.tight_layout()
 plt.show()
