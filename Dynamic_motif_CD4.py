@@ -35,7 +35,7 @@ def steady_state(vars):
 def dynamical_motif(y, t):
     I, E, C, P = y
     dIdt = k1 * I * (1 - I / I_max) - k2 * I * E
-    dEdt = k3 * + I * E / (kp + I) * (1 + (C / (phih + C))) - k4 * I * E / (ke + I)
+    dEdt = k3 * I * E / (kp + I) * (1 + (C / (phih + C))) - k4 * I * E / (ke + I)
     dCdt = k7 * I / (phiC + I) - gammaC * C
     dPdt = alpha * I * E - dc * P
     return [dIdt, dEdt, dCdt, dPdt]
