@@ -3,6 +3,15 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.ndimage import laplace
 
+"""
+Model of Fitz-Hugh-Nagumo 
+Localized excitation in the center with small random background noise.
+Through nonlinear reaction kinetics and diffusion, the excitation spreads outward as wave-like fronts. 
+This produce a spatial distribution characterized by propagating high-u regions surrounded by lower-u resting states.
+
+The resulting distribution is non-Gaussian, heterogeneous, and evolves dynamically as reaction-diffusion interactions generate complex spatiotemporal patterns.
+"""
+
 a = 0.1
 epsilon = 0.01
 D_u = 5.0
