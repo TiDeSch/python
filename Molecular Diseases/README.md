@@ -4,6 +4,7 @@
 
 Model of atrial fibrillation:
 Over time, the state distribution is dominated by resting cells, with smaller, dynamically varying fractions of excited and refractory cells as wavefronts propagate, fragment, and occasionally sustain reentrant  activity characteristic of atrial fibrillation.
+
 -------------------------------------
 
 Model of Dynamic Motif:
