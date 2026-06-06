@@ -2,13 +2,26 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
+"""
+Oosawa model:
+Polymer formation through primary nucleation and elongation.
+Monomers m(t) are converted into polymers.
+Polymer number concentration P(t) increasing via nucleation at rate dP/dt \propto mt^n_c. 
+Total polymer mass M(t) grows through monomer addition at rate \propto P(t). 
+
+In the extended models, dissociation (k_d) reduces polymer growth by releasing monomers from filament ends. 
+Fragmentation (k_f) creates additional polymer ends, increasing the number of polymers and accelerating mass accumulation.
+
+The model compare how these mechanisms affect the temporal evolution of monomer concentration, polymer number, and total polymer mass.
+"""
+
 # Parameters
-k_n = 1*10**(-6)    # nucleation rate
-k_a = 1*10**(-3)    # elongation rate
-k_d = 5*10**(-3)    # dissociation rate
-k_f = 2*10**(-3)    # fragmentation rate
-n_c = 4   # critical nucleus size
-m0 = 100.0  # initial monomer concentration
+k_n = 1*10**(-6) # nucleation rate
+k_a = 1*10**(-3) # elongation rate
+k_d = 5*10**(-3) # dissociation rate
+k_f = 2*10**(-3) # fragmentation rate
+n_c = 4 # critical nucleus size
+m0 = 100.0 # initial monomer concentration
 
 t_span = (0, 20)
 t_eval = np.linspace(*t_span, 1000)
