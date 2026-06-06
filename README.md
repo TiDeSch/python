@@ -1,10 +1,3 @@
-# ----------------------------------
 # Mathamatical models of physics of molecular diseases	
-
-# ----------------------------------
-# Quantum Computing algirithms - Using IBM
-# Using qiskit
-#
-# Grover's algorithm
-#
-# Quantum phase estimation algorithm
+----------------------------------
+# Quantum Computing algirithms - Using IBM (qiskit)
