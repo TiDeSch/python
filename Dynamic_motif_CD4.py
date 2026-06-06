@@ -1,9 +1,49 @@
 import numpy as np
 from scipy.integrate import odeint
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.optimize import root_scalar
+
+"""
+Based on the dynamical motif of Baral et al. 2019 (https://www.pnas.org/doi/10.1073/pnas.1902178116)
+The model extends the antigen CD8 T-cell interaction motif. 
+Incorporating CD4 T-cell help as an additional regulator of the immune response.
+Infected cells stimulate both CD8 and CD4 T cells, while sustained antigen exposure induces CD8 T-cell exhaustion.
+CD4 T cells enhance CD8 proliferation, strengthening viral clearance when sufficient help is present.
+
+The resulting system exhibits a bistable distribution of outcomes: 
+    - Clearance; characterized by low infected-cell burden 
+    - Sustained effector responses, and persistence; characterized by high infection levels and exhausted CD8 T cells.
+Trajectories near the basin boundary (saddle point) generate the greatest cytokine pathology, analogous to the immunopathology described in the original dynamical motif.
+
+dEdt = k3 * I * E / (kp + I) * (1 + (C / (phih + C))) - k4 * I * E / (ke + I)
+First term represents antigen-driven CD8 proliferation. Second represents antigen-driven exhaustion.
+dCdt = k7 * I / (phiC + I) - gammaC * C
+Increases in response to infected cells and boosts CD8 T-cell proliferation through the factor (1 + (C / (phih + C)))
+    I: infected cells; the source of antigen stimulation.
+    E: activated CD8+ T-cells (effector cells); kill infected cells.
+    P: cytokine pathology
+
+    k1: infection spread rate
+    k2: CD8 induced killing rate
+    dc: decay rate
+
+    k3: max CD8 activation rate driven by antigen. 
+        higher k3 -> stronger immune response.
+    k4: max CD8 T-cell exhaustion rate induced by persistent antigen exposure. 
+        higher k4 -> stronger exhaustion.
+        
+    kp: antigen level at which CD8 activation reaches roughly half its max (activation threshold/saturation constant). 
+        Smaller kp -> activation occurs more easily.
+    ke: antigen level at which exhaustion reaches roughly half its max (exhaustion threshold). 
+        Larger ke -> exhaustion starts only at higher antigen loads.
+
+    C: CD4 cells; support the CD8 proliferation. 
+    k7: max CD4 activation rate driven by antigen. 
+        higher k7 -> stronger immune response.
+    phiC: antigen level at which CD4 activation reaches roughly half its max
+    phih: CD4 help threshold; how much CD4 T-cell abundance is required to significantly enhance CD8 proliferation.
+    gammaC: CD4 decay rate
+"""
 
 k1 = 1.3  # /day (3-4) - Infection spread rate
 I_max = 10**6  # cells (10**6) - Maximum number of infected cells
@@ -159,20 +199,19 @@ axes[1,1].set_ylim([10**(-6), 1])
 axes[1,0].legend(loc='upper left')
 axes[1,1].grid(True)
 axes[1,1].set_title('Infected Cells Over Time')
-
 plt.tight_layout()
-#plt.show()
+
 
 # CD4 T cells
-#fig, axes = plt.subplots(1, 1, figsize=(8, 5))
-#axes.plot(t, traj_bound_forward[:, 2], color='black', label='At Saddle point', linewidth=2)
-#axes.plot(t, traj_above[:, 2], 'blue', label='Clearance', linewidth=2)
-#axes.plot(t, traj_below[:, 2], 'red', label='Persistence', linewidth=2)
-#axes.set_xlabel('Time post infection')
-#axes.set_ylabel('CD4 T cells (C)')
-#axes.legend()
-#axes.grid(True)
-#axes.set_title('CD4 T Cells Over Time')
+fig, axes = plt.subplots(1, 1, figsize=(8, 5))
+axes.plot(t, traj_bound_forward[:, 2], color='black', label='At Saddle point', linewidth=2)
+axes.plot(t, traj_above[:, 2], 'blue', label='Clearance', linewidth=2)
+axes.plot(t, traj_below[:, 2], 'red', label='Persistence', linewidth=2)
+axes.set_xlabel('Time post infection')
+axes.set_ylabel('CD4 T cells (C)')
+axes.legend()
+axes.grid(True)
+axes.set_title('CD4 T Cells Over Time')
 
 
 
