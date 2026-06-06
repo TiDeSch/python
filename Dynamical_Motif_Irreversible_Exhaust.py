@@ -1,9 +1,42 @@
 import numpy as np
 from scipy.integrate import odeint
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.optimize import root_scalar
+
+"""
+Based on the dynamical motif of Baral et al. 2019 (https://www.pnas.org/doi/10.1073/pnas.1902178116)
+The model extends the antigen CD8 T-cell interaction motif. 
+Introduces a parameter f that suppresses CD8 T-cell activation. 
+Effectivly irreversible exhaustion of a fraction of CD8 cells.
+
+Infected cells stimulate CD8 T-cell proliferation, whereas persistent antigen exposure induces exhaustion. 
+The suppression parameter reduces the effective activation of CD8 T cells and shifts the balance between immune control and exhaustion. 
+The model exhibits bistable dynamics, with trajectories converging to either viral clearance or persistent infection. 
+trajectories near the basin boundary generate elevated cytokine pathology. 
+Increasing immune suppression enlarges the persistence basin and raises the threshold CD8 T-cell response required for clearance.
+
+dE/dt = k3 * I * E / (kp - 1) * (1 - f) - k4 * I * E / (ke - I)
+First term represents antigen-driven CD8 proliferation. Second represents antigen-driven exhaustion.
+    I: infected cells; the source of antigen stimulation.
+    E: activated CD8+ T-cells (effector cells); kill infected cells.
+    P: cytokine pathology
+
+    k1: infection spread rate
+    k2: CD8 induced killing rate
+    dc: decay rate
+
+    k3: max CD8 T-cell activation rate driven by antigen. 
+        higher k3 -> stronger immune response.
+    k4: max CD8 T-cell exhaustion rate induced by persistent antigen exposure. 
+        higher k4 -> stronger exhaustion.
+        
+    kp: antigen level at which CD8 activation reaches roughly half its max (activation threshold/saturation constant). 
+        Smaller kp -> activation occurs more easily.
+    ke: antigen level at which exhaustion reaches roughly half its max (exhaustion threshold). 
+        Larger ke -> exhaustion starts only at higher antigen loads.
+
+    f: the fraction of irreversible exhaution
+"""
 
 k1 = 1.3  # /day (3-4) - Infection spread rate
 I_max = 10**6  # cells (10**6) - Maximum number of infected cells
